@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>大会管理（受付＋勝敗）</title>
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  h2 { margin-top: 30px; }
+  button { padding: 6px 12px; margin: 4px 0; }
+  input { padding: 6px; width: 200px; }
+  .player { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<h1>大会管理</h1>
+
+<!-- 受付 -->
+<h2>受付</h2>
+<input id="nameInput" placeholder="名前を入力">
+<button id="addBtn">追加</button>
+
+<ul id="playerList"></ul>
+
+<hr>
+
+<!-- 勝敗入力 -->
+<h2>勝敗入力</h2>
+<select id="p1"></select> vs <select id="p2"></select>
+<button id="winBtn">勝者を登録</button>
+
+<hr>
+
+<!-- 集計 -->
+<h2>集計結果</h2>
+<ul id="resultList"></ul>
+
+<script>
+  // --- データ読み込み ---
+  let players = JSON.parse(localStorage.getItem("players") || "[]");
+
+  // --- 画面更新 ---
+  function renderPlayers() {
+    const list = document.getElementById("playerList");
+    const p1 = document.getElementById("p1");
+    const p2 = document.getElementById("p2");
+
+    list.innerHTML = "";
+    p1.innerHTML = "";
+    p2.innerHTML = "";
+
+    players.forEach(p => {
+      // 受付リスト
+      const li = document.createElement("li");
+      li.textContent = `${p.name}（勝ち：${p.win}）`;
+      list.appendChild(li);
+
+      // 対戦選択肢
+      const opt1 = document.createElement("option");
+      opt1.value = p.id;
+      opt1.textContent = p.name;
+      p1.appendChild(opt1);
+
+      const opt2 = document.createElement("option");
+      opt2.value = p.id;
+      opt2.textContent = p.name;
+      p2.appendChild(opt2);
+    });
+
+    renderResults();
+  }
+
+  // --- 集計表示 ---
+  function renderResults() {
+    const resultList = document.getElementById("resultList");
+    resultList.innerHTML = "";
+
+    // 勝ち数でソート
+    const sorted = [...players].sort((a, b) => b.win - a.win);
+
+    sorted.forEach(p => {
+      const li = document.createElement("li");
+      li.textContent = `${p.name}：${p.win}勝`;
+      resultList.appendChild(li);
+    });
+  }
+
+  // --- 受付追加 ---
+  document.getElementById("addBtn").onclick = () => {
+    const name = document.getElementById("nameInput").value.trim();
+    if (!name) return;
+
+    players.push({
+      id: Date.now(),
+      name,
+      win: 0
+    });
+
+    localStorage.setItem("players", JSON.stringify(players));
+    document.getElementById("nameInput").value = "";
+    renderPlayers();
+  };
+
+  // --- 勝敗登録 ---
+  document.getElementById("winBtn").onclick = () => {
+    const p1 = Number(document.getElementById("p1").value);
+    const p2 = Number(document.getElementById("p2").value);
+
+    if (p1 === p2) {
+      alert("同じプレイヤー同士は選べません");
+      return;
+    }
+
+    const winnerId = p1; // とりあえず p1 を勝者とする（後でUI改善可）
+    const winner = players.find(p => p.id === winnerId);
+    winner.win++;
+
+    localStorage.setItem("players", JSON.stringify(players));
+    renderPlayers();
+  };
+
+  renderPlayers();
+</script>
+
+</body>
+</html>
