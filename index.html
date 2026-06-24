@@ -8,7 +8,15 @@
   h2 { margin-top: 30px; }
   button { padding: 6px 12px; margin: 4px 0; }
   input { padding: 6px; width: 200px; }
-  .player { margin: 4px 0; }
+  .player {
+    margin: 6px 0;
+    padding: 8px;
+    background: #f5f5f5;
+    border-radius: 6px;
+  }
+  .player button {
+    margin-left: 8px;
+  }
 </style>
 </head>
 <body>
@@ -39,46 +47,68 @@
   // --- データ読み込み ---
   let players = JSON.parse(localStorage.getItem("players") || "[]");
 
-  // --- 画面更新 ---
+  // --- プレイヤー一覧表示（編集・削除付き） ---
   function renderPlayers() {
-  const list = document.getElementById("playerList");
-  const p1 = document.getElementById("p1");
-  const p2 = document.getElementById("p2");
+    const list = document.getElementById("playerList");
+    const p1 = document.getElementById("p1");
+    const p2 = document.getElementById("p2");
 
-  list.innerHTML = "";
-  p1.innerHTML = "";
-  p2.innerHTML = "";
+    list.innerHTML = "";
+    p1.innerHTML = "";
+    p2.innerHTML = "";
 
-  players.forEach(p => {
-    // 受付リスト（編集・削除付き）
-    const li = document.createElement("li");
-    li.className = "player";
-
-    li.innerHTML = `
-      ${p.name}（${p.win}勝）
-      <button onclick="editPlayer(${p.id})">編集</button>
-      <button onclick="deletePlayer(${p.id})">削除</button>
-    `;
-    list.appendChild(li);
-      // 受付リスト
+    players.forEach(p => {
+      // 受付リスト（編集・削除付き）
       const li = document.createElement("li");
-      li.textContent = `${p.name}（勝ち：${p.win}）`;
+      li.className = "player";
+
+      li.innerHTML = `
+        ${p.name}（${p.win}勝）
+        <button onclick="editPlayer(${p.id})">編集</button>
+        <button onclick="deletePlayer(${p.id})">削除</button>
+      `;
       list.appendChild(li);
 
       // 対戦選択肢
-       const opt1 = document.createElement("option");
-    opt1.value = p.id;
-    opt1.textContent = p.name;
-    p1.appendChild(opt1);
+      const opt1 = document.createElement("option");
+      opt1.value = p.id;
+      opt1.textContent = p.name;
+      p1.appendChild(opt1);
 
-    const opt2 = document.createElement("option");
-    opt2.value = p.id;
-    opt2.textContent = p.name;
-    p2.appendChild(opt2);
-  });
+      const opt2 = document.createElement("option");
+      opt2.value = p.id;
+      opt2.textContent = p.name;
+      p2.appendChild(opt2);
+    });
 
-  renderResults();
-}
+    renderResults();
+  }
+
+  // --- 編集 ---
+  function editPlayer(id) {
+    const player = players.find(p => p.id === id);
+    const newName = prompt("新しい名前を入力", player.name);
+
+    if (newName && newName.trim() !== "") {
+      player.name = newName.trim();
+      savePlayers();
+      renderPlayers();
+    }
+  }
+
+  // --- 削除 ---
+  function deletePlayer(id) {
+    if (!confirm("本当に削除しますか？")) return;
+
+    players = players.filter(p => p.id !== id);
+    savePlayers();
+    renderPlayers();
+  }
+
+  // --- 保存 ---
+  function savePlayers() {
+    localStorage.setItem("players", JSON.stringify(players));
+  }
 
   // --- 集計表示 ---
   function renderResults() {
@@ -106,7 +136,7 @@
       win: 0
     });
 
-    localStorage.setItem("players", JSON.stringify(players));
+    savePlayers();
     document.getElementById("nameInput").value = "";
     renderPlayers();
   };
@@ -125,31 +155,9 @@
     const winner = players.find(p => p.id === winnerId);
     winner.win++;
 
-    localStorage.setItem("players", JSON.stringify(players));
-    renderPlayers();
-  };
-  function editPlayer(id) {
-  const player = players.find(p => p.id === id);
-  const newName = prompt("新しい名前を入力", player.name);
-
-  if (newName && newName.trim() !== "") {
-    player.name = newName.trim();
     savePlayers();
     renderPlayers();
-  }
- }
-
- function deletePlayer(id) {
-  if (!confirm("本当に削除しますか？")) return;
-
-  players = players.filter(p => p.id !== id);
-  savePlayers();
-  renderPlayers();
- }
-
- function savePlayers() {
-  localStorage.setItem("players", JSON.stringify(players));
- }
+  };
 
   renderPlayers();
 </script>
