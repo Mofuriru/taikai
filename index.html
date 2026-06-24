@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>大会管理（受付＋勝敗）</title>
+<title>大会管理（Firestore同期版）</title>
 <style>
   body { font-family: sans-serif; padding: 20px; }
   h2 { margin-top: 30px; }
@@ -21,7 +21,7 @@
 </head>
 <body>
 
-<h1>大会管理</h1>
+<h1>大会管理（同期版）</h1>
 
 <!-- 受付 -->
 <h2>受付</h2>
@@ -43,11 +43,36 @@
 <h2>集計結果</h2>
 <ul id="resultList"></ul>
 
-<script>
-  // --- データ読み込み ---
-  let players = JSON.parse(localStorage.getItem("players") || "[]");
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
 
-  // --- プレイヤー一覧表示（編集・削除付き） ---
+<script>
+  // --- Firebase設定（あなたの設定をそのまま使用） ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyAw3rO-PcDR_Bjt4LLfaqB6bWyTHsph9k",
+    authDomain: "taikai-9feb7.firebaseapp.com",
+    projectId: "taikai-9feb7",
+    storageBucket: "taikai-9feb7.firebasestorage.app",
+    messagingSenderId: "937050290163",
+    appId: "1:937050290163:web:7f75e74254c4bbf14e4486"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let players = [];
+
+  // --- Firestoreからリアルタイム取得 ---
+  db.collection("players").orderBy("createdAt").onSnapshot(snapshot => {
+    players = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    renderPlayers();
+  });
+
+  // --- プレイヤー一覧表示 ---
   function renderPlayers() {
     const list = document.getElementById("playerList");
     const p1 = document.getElementById("p1");
@@ -58,18 +83,16 @@
     p2.innerHTML = "";
 
     players.forEach(p => {
-      // 受付リスト（編集・削除付き）
       const li = document.createElement("li");
       li.className = "player";
 
       li.innerHTML = `
         ${p.name}（${p.win}勝）
-        <button onclick="editPlayer(${p.id})">編集</button>
-        <button onclick="deletePlayer(${p.id})">削除</button>
+        <button onclick="editPlayer('${p.id}')">編集</button>
+        <button onclick="deletePlayer('${p.id}')">削除</button>
       `;
       list.appendChild(li);
 
-      // 対戦選択肢
       const opt1 = document.createElement("option");
       opt1.value = p.id;
       opt1.textContent = p.name;
@@ -84,38 +107,11 @@
     renderResults();
   }
 
-  // --- 編集 ---
-  function editPlayer(id) {
-    const player = players.find(p => p.id === id);
-    const newName = prompt("新しい名前を入力", player.name);
-
-    if (newName && newName.trim() !== "") {
-      player.name = newName.trim();
-      savePlayers();
-      renderPlayers();
-    }
-  }
-
-  // --- 削除 ---
-  function deletePlayer(id) {
-    if (!confirm("本当に削除しますか？")) return;
-
-    players = players.filter(p => p.id !== id);
-    savePlayers();
-    renderPlayers();
-  }
-
-  // --- 保存 ---
-  function savePlayers() {
-    localStorage.setItem("players", JSON.stringify(players));
-  }
-
   // --- 集計表示 ---
   function renderResults() {
     const resultList = document.getElementById("resultList");
     resultList.innerHTML = "";
 
-    // 勝ち数でソート
     const sorted = [...players].sort((a, b) => b.win - a.win);
 
     sorted.forEach(p => {
@@ -130,36 +126,47 @@
     const name = document.getElementById("nameInput").value.trim();
     if (!name) return;
 
-    players.push({
-      id: Date.now(),
+    db.collection("players").add({
       name,
-      win: 0
+      win: 0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    savePlayers();
     document.getElementById("nameInput").value = "";
-    renderPlayers();
   };
+
+  // --- 編集 ---
+  function editPlayer(id) {
+    const player = players.find(p => p.id === id);
+    const newName = prompt("新しい名前を入力", player.name);
+
+    if (newName && newName.trim() !== "") {
+      db.collection("players").doc(id).update({
+        name: newName.trim()
+      });
+    }
+  }
+
+  // --- 削除 ---
+  function deletePlayer(id) {
+    if (!confirm("本当に削除しますか？")) return;
+    db.collection("players").doc(id).delete();
+  }
 
   // --- 勝敗登録 ---
   document.getElementById("winBtn").onclick = () => {
-    const p1 = Number(document.getElementById("p1").value);
-    const p2 = Number(document.getElementById("p2").value);
+    const p1 = document.getElementById("p1").value;
+    const p2 = document.getElementById("p2").value;
 
     if (p1 === p2) {
       alert("同じプレイヤー同士は選べません");
       return;
     }
 
-    const winnerId = p1; // とりあえず p1 を勝者とする（後でUI改善可）
-    const winner = players.find(p => p.id === winnerId);
-    winner.win++;
-
-    savePlayers();
-    renderPlayers();
+    db.collection("players").doc(p1).update({
+      win: firebase.firestore.FieldValue.increment(1)
+    });
   };
-
-  renderPlayers();
 </script>
 
 </body>
