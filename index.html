@@ -64,7 +64,8 @@
   let players = [];
 
   // --- Firestoreからリアルタイム取得 ---
-  db.collection("players").orderBy("createdAt").onSnapshot(snapshot => {
+  db.collection("players").onSnapshot(snapshot => {
+
     players = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
