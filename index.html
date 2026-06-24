@@ -41,34 +41,44 @@
 
   // --- 画面更新 ---
   function renderPlayers() {
-    const list = document.getElementById("playerList");
-    const p1 = document.getElementById("p1");
-    const p2 = document.getElementById("p2");
+  const list = document.getElementById("playerList");
+  const p1 = document.getElementById("p1");
+  const p2 = document.getElementById("p2");
 
-    list.innerHTML = "";
-    p1.innerHTML = "";
-    p2.innerHTML = "";
+  list.innerHTML = "";
+  p1.innerHTML = "";
+  p2.innerHTML = "";
 
-    players.forEach(p => {
+  players.forEach(p => {
+    // 受付リスト（編集・削除付き）
+    const li = document.createElement("li");
+    li.className = "player";
+
+    li.innerHTML = `
+      ${p.name}（${p.win}勝）
+      <button onclick="editPlayer(${p.id})">編集</button>
+      <button onclick="deletePlayer(${p.id})">削除</button>
+    `;
+    list.appendChild(li);
       // 受付リスト
       const li = document.createElement("li");
       li.textContent = `${p.name}（勝ち：${p.win}）`;
       list.appendChild(li);
 
       // 対戦選択肢
-      const opt1 = document.createElement("option");
-      opt1.value = p.id;
-      opt1.textContent = p.name;
-      p1.appendChild(opt1);
+       const opt1 = document.createElement("option");
+    opt1.value = p.id;
+    opt1.textContent = p.name;
+    p1.appendChild(opt1);
 
-      const opt2 = document.createElement("option");
-      opt2.value = p.id;
-      opt2.textContent = p.name;
-      p2.appendChild(opt2);
-    });
+    const opt2 = document.createElement("option");
+    opt2.value = p.id;
+    opt2.textContent = p.name;
+    p2.appendChild(opt2);
+  });
 
-    renderResults();
-  }
+  renderResults();
+}
 
   // --- 集計表示 ---
   function renderResults() {
@@ -118,6 +128,28 @@
     localStorage.setItem("players", JSON.stringify(players));
     renderPlayers();
   };
+  function editPlayer(id) {
+  const player = players.find(p => p.id === id);
+  const newName = prompt("新しい名前を入力", player.name);
+
+  if (newName && newName.trim() !== "") {
+    player.name = newName.trim();
+    savePlayers();
+    renderPlayers();
+  }
+ }
+
+ function deletePlayer(id) {
+  if (!confirm("本当に削除しますか？")) return;
+
+  players = players.filter(p => p.id !== id);
+  savePlayers();
+  renderPlayers();
+ }
+
+ function savePlayers() {
+  localStorage.setItem("players", JSON.stringify(players));
+ }
 
   renderPlayers();
 </script>
