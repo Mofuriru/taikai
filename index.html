@@ -108,6 +108,15 @@ vs
      div.appendChild(editBtn);
      div.appendChild(deleteBtn);
      playerList.appendChild(div);
+     // --- 🔥 勝敗入力のプルダウンに追加 ---
+     const option1 = document.createElement("option");
+     option1.value = doc.id;
+     option1.textContent = player.name;
+     player1.appendChild(option1);
+     const option2 = document.createElement("option");
+     option2.value = doc.id;
+     option2.textContent = player.name;
+     player2.appendChild(option2);
     });
   });
 
