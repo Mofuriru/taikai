@@ -16,6 +16,7 @@
 <h1>大会管理 v1（同期テスト）</h1>
 
 <h2>受付</h2>
+<button id="resetAll" style="margin-top: 10px;">初期化</button>
 <input id="nameInput" placeholder="名前を入力">
 <button id="addBtn">追加</button>
 <div id="playerList"></div>
@@ -157,7 +158,16 @@
 
     document.getElementById("nameInput").value = "";
   };
-
+  document.getElementById("resetAll").onclick = async () => {
+    if (!confirm("本当に全てのプレイヤーを削除しますか？")) return;
+    const snapshot = await db.collection("players").get();
+    const batch = db.batch();
+    snapshot.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+    alert("全てのプレイヤーを削除しました");
+  };
   // 勝敗登録（p1 を勝者として +1）
   document.getElementById("winBtn").onclick = () => {
     const p1 = document.getElementById("p1").value;
