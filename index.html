@@ -172,13 +172,32 @@ vs
   .onSnapshot((snapshot) => {
     const resultList = document.getElementById("resultList");
     resultList.innerHTML = "";
-    let rank = 1;
+
+    let lastWin = null;   // 前のプレイヤーの勝利数
+    let lastRank = 0;     // 前の順位
+    let index = 0;        // 何人目か（0,1,2,...）
+
     snapshot.forEach((doc) => {
       const p = doc.data();
+      const win = p.win ?? 0;
+
+      // 順位計算
+      if (win === lastWin) {
+        // 同率
+        rank = lastRank;
+      } 
+      else {
+        // 新しい順位
+        rank = index + 1;
+        lastRank = rank;
+        lastWin = win;
+      }
+
       const li = document.createElement("li");
-      li.textContent = `${rank}位 ${p.name}（${p.win ?? 0}勝）`;
+      li.textContent = `${rank}位${win === lastWin ? "" : ""} ${p.name}（${win}勝）`;
       resultList.appendChild(li);
-      rank++;
+
+      index++;
     });
   });
 
