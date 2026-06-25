@@ -2,53 +2,41 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>大会管理（Firestore同期版）</title>
+<title>大会管理 v1（同期テスト）</title>
 <style>
   body { font-family: sans-serif; padding: 20px; }
   h2 { margin-top: 30px; }
   button { padding: 6px 12px; margin: 4px 0; }
   input { padding: 6px; width: 200px; }
-  .player {
-    margin: 6px 0;
-    padding: 8px;
-    background: #f5f5f5;
-    border-radius: 6px;
-  }
-  .player button {
-    margin-left: 8px;
-  }
+  .player { margin: 4px 0; }
 </style>
 </head>
 <body>
 
-<h1>大会管理（同期版）</h1>
+<h1>大会管理 v1（同期テスト）</h1>
 
-<!-- 受付 -->
 <h2>受付</h2>
 <input id="nameInput" placeholder="名前を入力">
 <button id="addBtn">追加</button>
-
 <ul id="playerList"></ul>
 
 <hr>
 
-<!-- 勝敗入力 -->
 <h2>勝敗入力</h2>
 <select id="p1"></select> vs <select id="p2"></select>
 <button id="winBtn">勝者を登録</button>
 
 <hr>
 
-<!-- 集計 -->
 <h2>集計結果</h2>
 <ul id="resultList"></ul>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+<!-- Firebase SDK（compat版） -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
-  // --- Firebase設定（あなたの設定をそのまま使用） ---
+  // ★ あなたの Firebase 設定
   const firebaseConfig = {
     apiKey: "AIzaSyAw3rO-PcDR_Bjt4LLfaqB6bWyTHsph9k",
     authDomain: "taikai-9feb7.firebaseapp.com",
@@ -58,14 +46,13 @@
     appId: "1:937050290163:web:7f75e74254c4bbf14e4486"
   };
 
-  const app = firebase.initializeApp(firebaseConfig);
+  firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
   let players = [];
 
-  // --- Firestoreからリアルタイム取得 ---
+  // Firestore からリアルタイム取得
   db.collection("players").onSnapshot(snapshot => {
-
     players = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -73,7 +60,6 @@
     renderPlayers();
   });
 
-  // --- プレイヤー一覧表示 ---
   function renderPlayers() {
     const list = document.getElementById("playerList");
     const p1 = document.getElementById("p1");
@@ -86,12 +72,7 @@
     players.forEach(p => {
       const li = document.createElement("li");
       li.className = "player";
-
-      li.innerHTML = `
-        ${p.name}（${p.win}勝）
-        <button onclick="editPlayer('${p.id}')">編集</button>
-        <button onclick="deletePlayer('${p.id}')">削除</button>
-      `;
+      li.textContent = `${p.name}（${p.win ?? 0}勝）`;
       list.appendChild(li);
 
       const opt1 = document.createElement("option");
@@ -108,21 +89,20 @@
     renderResults();
   }
 
-  // --- 集計表示 ---
   function renderResults() {
     const resultList = document.getElementById("resultList");
     resultList.innerHTML = "";
 
-    const sorted = [...players].sort((a, b) => b.win - a.win);
+    const sorted = [...players].sort((a, b) => (b.win ?? 0) - (a.win ?? 0));
 
     sorted.forEach(p => {
       const li = document.createElement("li");
-      li.textContent = `${p.name}：${p.win}勝`;
+      li.textContent = `${p.name}：${p.win ?? 0}勝`;
       resultList.appendChild(li);
     });
   }
 
-  // --- 受付追加 ---
+  // 受付追加
   document.getElementById("addBtn").onclick = () => {
     const name = document.getElementById("nameInput").value.trim();
     if (!name) return;
@@ -136,29 +116,15 @@
     document.getElementById("nameInput").value = "";
   };
 
-  // --- 編集 ---
-  function editPlayer(id) {
-    const player = players.find(p => p.id === id);
-    const newName = prompt("新しい名前を入力", player.name);
-
-    if (newName && newName.trim() !== "") {
-      db.collection("players").doc(id).update({
-        name: newName.trim()
-      });
-    }
-  }
-
-  // --- 削除 ---
-  function deletePlayer(id) {
-    if (!confirm("本当に削除しますか？")) return;
-    db.collection("players").doc(id).delete();
-  }
-
-  // --- 勝敗登録 ---
+  // 勝敗登録（p1 を勝者として +1）
   document.getElementById("winBtn").onclick = () => {
     const p1 = document.getElementById("p1").value;
     const p2 = document.getElementById("p2").value;
 
+    if (!p1 || !p2) {
+      alert("プレイヤーが足りません");
+      return;
+    }
     if (p1 === p2) {
       alert("同じプレイヤー同士は選べません");
       return;
