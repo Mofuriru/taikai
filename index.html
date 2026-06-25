@@ -120,49 +120,6 @@ vs
     });
   });
 
-
-  function renderPlayers() {
-    const list = document.getElementById("playerList");
-    const p1 = document.getElementById("p1");
-    const p2 = document.getElementById("p2");
-
-    list.innerHTML = "";
-    p1.innerHTML = "";
-    p2.innerHTML = "";
-
-    players.forEach(p => {
-      const li = document.createElement("li");
-      li.className = "player";
-      li.textContent = `${p.name}（${p.win ?? 0}勝）`;
-      list.appendChild(li);
-
-      const opt1 = document.createElement("option");
-      opt1.value = p.id;
-      opt1.textContent = p.name;
-      p1.appendChild(opt1);
-
-      const opt2 = document.createElement("option");
-      opt2.value = p.id;
-      opt2.textContent = p.name;
-      p2.appendChild(opt2);
-    });
-
-    renderResults();
-  }
-
-  function renderResults() {
-    const resultList = document.getElementById("resultList");
-    resultList.innerHTML = "";
-
-    const sorted = [...players].sort((a, b) => (b.win ?? 0) - (a.win ?? 0));
-
-    sorted.forEach(p => {
-      const li = document.createElement("li");
-      li.textContent = `${p.name}：${p.win ?? 0}勝`;
-      resultList.appendChild(li);
-    });
-  }
-
   // 受付追加
   document.getElementById("addBtn").onclick = () => {
     const name = document.getElementById("nameInput").value.trim();
@@ -207,6 +164,21 @@ vs
     });
     alert("勝敗を登録しました");
   };
+  // --- ランキング（勝ち数順） ---
+  db.collection("players")
+  .orderBy("win", "desc")
+  .onSnapshot((snapshot) => {
+    const resultList = document.getElementById("resultList");
+    resultList.innerHTML = "";
+    let rank = 1;
+    snapshot.forEach((doc) => {
+      const p = doc.data();
+      const li = document.createElement("li");
+      li.textContent = `${rank}位 ${p.name}（${p.win ?? 0}勝）`;
+      resultList.appendChild(li);
+      rank++;
+    });
+  });
 
 </script>
 
