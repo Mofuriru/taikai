@@ -176,43 +176,38 @@ vs
     const resultList = document.getElementById("resultList");
     resultList.innerHTML = "";
 
-    let lastWin = null;   // 前のプレイヤーの勝利数
-    let lastRank = 0;     // 前の順位
-    let index = 0;        // 何人目か（0,1,2,...）
+    const players = snapshot.docs.map(doc => doc.data());
+    const allZero = players.every(p => (p.win ?? 0) === 0);
+
+    // 🔥 全員 0 勝ならランキングを表示しない
+    if (allZero) {
+      return; // 何も表示しない
+    }
+
+    let lastWin = null;
+    let lastRank = 0;
+    let index = 0;
 
     snapshot.forEach((doc) => {
       const p = doc.data();
       const win = p.win ?? 0;
 
-      // 順位計算
+      let rank;
       if (win === lastWin) {
-        // 同率
-        rank = lastRank;
-      } 
-      else {
-        // 新しい順位
-        rank = index + 1;
+        rank = lastRank; // 同率
+      } else {
+        rank = index + 1; // 新しい順位
         lastRank = rank;
         lastWin = win;
       }
 
       const li = document.createElement("li");
-      li.textContent = `${rank}位${win === lastWin ? "" : ""} ${p.name}（${win}勝）`;
+      li.textContent = `${rank}位 ${p.name}（${win}勝）`;
       resultList.appendChild(li);
 
       index++;
     });
   });
-  document.getElementById("resetWins").onclick = async () => {
-    if (!confirm("全員の勝利数を 0 にリセットしますか？")) return;
-     const snapshot = await db.collection("players").get();
-     const batch = db.batch();
-     snapshot.forEach((doc) => {
-     batch.update(doc.ref, { win: 0 });
-    });
-   await batch.commit();
-   alert("勝利数をリセットしました");
- };
 
 
 </script>
