@@ -208,6 +208,17 @@ vs
       index++;
     });
   });
+  document.getElementById("resetWins").onclick = async () => {
+    if (!confirm("全員の勝利数を 0 にリセットしますか？")) return;
+    const snapshot = await db.collection("players").get();
+    const batch = db.batch();
+    snapshot.forEach((doc) => {
+      batch.update(doc.ref, { win: 0 });
+    });
+   await batch.commit();
+   alert("勝利数をリセットしました");
+  };
+
 
 
 </script>
