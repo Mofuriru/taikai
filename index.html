@@ -17,6 +17,7 @@
 
 <h2>受付</h2>
 <button id="resetAll" style="margin-top: 10px;">初期化</button>
+<br>
 <input id="nameInput" placeholder="名前を入力">
 <button id="addBtn">追加</button>
 <div id="playerList"></div>
@@ -39,6 +40,8 @@ vs
 <hr>
 
 <h2>集計結果</h2>
+<button id="resetWins" style="margin-top: 10px;">勝敗リセット</button>
+<br>
 <ul id="resultList"></ul>
 
 <!-- Firebase SDK（compat版） -->
@@ -200,6 +203,17 @@ vs
       index++;
     });
   });
+  document.getElementById("resetWins").onclick = async () => {
+    if (!confirm("全員の勝利数を 0 にリセットしますか？")) return;
+     const snapshot = await db.collection("players").get();
+     const batch = db.batch();
+     snapshot.forEach((doc) => {
+     batch.update(doc.ref, { win: 0 });
+    });
+   await batch.commit();
+   alert("勝利数をリセットしました");
+ };
+
 
 </script>
 
