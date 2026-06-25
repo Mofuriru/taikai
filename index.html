@@ -62,6 +62,23 @@
      div.style.gap = "8px";
      const nameSpan = document.createElement("span");
      nameSpan.textContent = `${player.name}（${player.win}勝）`;
+     // 🔧 編集ボタン
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "編集";
+      editBtn.style.background = "#4da6ff";
+      editBtn.style.color = "white";
+      editBtn.style.border = "none";
+      editBtn.style.padding = "4px 8px";
+      editBtn.style.borderRadius = "4px";
+      editBtn.style.cursor = "pointer";
+      editBtn.onclick = () => {
+       const newName = prompt("新しい名前を入力してください", player.name);
+       if (newName && newName.trim() !== "") {
+         db.collection("players").doc(doc.id).update({
+          name: newName.trim()
+         });
+       }
+     };
      // 🔥 削除ボタン
      const deleteBtn = document.createElement("button");
      deleteBtn.textContent = "削除";
