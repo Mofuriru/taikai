@@ -18,7 +18,7 @@
 <h2>受付</h2>
 <input id="nameInput" placeholder="名前を入力">
 <button id="addBtn">追加</button>
-<ul id="playerList"></ul>
+<div id="playerList"></div>
 
 <hr>
 
@@ -52,13 +52,37 @@
   let players = [];
 
   // Firestore からリアルタイム取得
-  db.collection("players").onSnapshot(snapshot => {
-    players = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-    renderPlayers();
+ db.collection("players").orderBy("createdAt").onSnapshot((snapshot) => {
+   playerList.innerHTML = "";
+   snapshot.forEach((doc) => {
+     const player = doc.data();
+     const div = document.createElement("div");
+     div.style.display = "flex";
+     div.style.alignItems = "center";
+     div.style.gap = "8px";
+     const nameSpan = document.createElement("span");
+     nameSpan.textContent = `${player.name}（${player.win}勝）`;
+     // 🔥 削除ボタン
+     const deleteBtn = document.createElement("button");
+     deleteBtn.textContent = "削除";
+     deleteBtn.style.background = "#ff4d4d";
+     deleteBtn.style.color = "white";
+     deleteBtn.style.border = "none";
+     deleteBtn.style.padding = "4px 8px";
+     deleteBtn.style.borderRadius = "4px";
+     deleteBtn.style.cursor = "pointer";
+     deleteBtn.onclick = () => {
+        if (confirm(`${player.name} を削除しますか？`)) {
+          db.collection("players").doc(doc.id).delete();
+        }
+     };
+
+     div.appendChild(nameSpan);
+     div.appendChild(deleteBtn);
+     playerList.appendChild(div);
+    });
   });
+
 
   function renderPlayers() {
     const list = document.getElementById("playerList");
