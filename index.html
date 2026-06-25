@@ -24,8 +24,17 @@
 <hr>
 
 <h2>勝敗入力</h2>
-<select id="p1"></select> vs <select id="p2"></select>
-<button id="winBtn">勝者を登録</button>
+<select id="player1"></select>
+vs
+<select id="player2"></select>
+
+<div style="margin-top: 8px;">
+  <label><input type="radio" name="winner" value="p1"> 左のプレイヤーが勝ち</label><br>
+  <label><input type="radio" name="winner" value="p2"> 右のプレイヤーが勝ち</label>
+</div>
+
+<button id="registerWin">勝者を登録</button>
+
 
 <hr>
 
@@ -168,24 +177,28 @@
     await batch.commit();
     alert("全てのプレイヤーを削除しました");
   };
-  // 勝敗登録（p1 を勝者として +1）
-  document.getElementById("winBtn").onclick = () => {
-    const p1 = document.getElementById("p1").value;
-    const p2 = document.getElementById("p2").value;
-
-    if (!p1 || !p2) {
-      alert("プレイヤーが足りません");
+  document.getElementById("registerWin").onclick = async () => {
+    const p1 = document.getElementById("player1").value;
+    const p2 = document.getElementById("player2").value;
+    if (!p1 || !p2 || p1 === p2) {
+      alert("別々のプレイヤーを選んでください");
       return;
     }
-    if (p1 === p2) {
-      alert("同じプレイヤー同士は選べません");
+    const winnerRadio = document.querySelector('input[name="winner"]:checked');
+    if (!winnerRadio) {
+      alert("勝者を選んでください");
       return;
     }
-
-    db.collection("players").doc(p1).update({
-      win: firebase.firestore.FieldValue.increment(1)
+    const winner = winnerRadio.value === "p1" ? p1 : p2;
+    // 勝者の win を +1
+    const winnerDoc = await db.collection("players").doc(winner).get();
+    const currentWin = winnerDoc.data().win || 0;
+    await db.collection("players").doc(winner).update({
+      win: currentWin + 1
     });
+    alert("勝敗を登録しました");
   };
+
 </script>
 
 </body>
